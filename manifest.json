@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "Audible Backup",
+  "version": "3",
+
+  "description": "Download and backup your Audible books to a remote server",
+
+  "browser_action": {
+    "default_icon": {
+      "48": "icons/icon.png"
+    },
+    "default_title": "Audible Backup"
+  },
+
+  "permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background-script.js"]
+  }
+}
