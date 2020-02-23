@@ -73,7 +73,7 @@ async function getBooks(link) {
   )[0];
   // If this is the last page, break recursion by just returning this
   // pages books
-  if (nextButton.getAttribute('disabled') === 'true') {
+  if (typeof nextButton === 'undefined' || nextButton.getAttribute('disabled') === 'true') {
     return parseBooks(libraryDocument);
   }
   // If this isn't the last page, go into recursion and return this
