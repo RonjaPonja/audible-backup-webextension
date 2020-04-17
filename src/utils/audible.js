@@ -1,5 +1,6 @@
 /* global browser, chrome */
 /* eslint-disable no-await-in-loop */
+import browser from 'webextension-polyfill'
 
 const AUDIBLE_DE = 'https://www.audible.de';
 const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/lib?sortBy=PURCHASE_DATE.dsc&pageSize=20&page=1`;
@@ -7,7 +8,7 @@ const AUDIBLE_SETTINGS_URL = `${AUDIBLE_DE}/a/library/settings`;
 const BACKUP_URL = '<your-url-goes-here>';
 
 
-async function checkLoggedIn() {
+export async function checkLoggedIn() {
   // Check if we are logged in
   const libraryResponse = await fetch(new Request(
     AUDIBLE_LIBRARY_URL, { redirect: 'manual' },
@@ -22,7 +23,7 @@ async function checkLoggedIn() {
   return true;
 }
 
-async function setQuality() {
+export async function setQuality() {
   // Check if we are logged in and get token
   const tokenElement = await fetch(AUDIBLE_LIBRARY_URL)
     .then((response) => response.text())
@@ -56,7 +57,7 @@ function parseBooks(libraryDocument) {
   }), {});
 }
 
-async function getBooks(link) {
+export async function getBooks(link = AUDIBLE_LIBRARY_URL) {
   const libraryDocument = await fetch(link)
     .then((response) => response.text())
     .then((text) => new DOMParser().parseFromString(text, 'text/html'));
@@ -97,7 +98,7 @@ function crossReferenceASINs(ASINs) {
     .then((response) => response.json());
 }
 
-async function shareBooks(books) {
+export async function shareBooks(books) {
   let requestedASINs = await crossReferenceASINs(Object.keys(books));
   while (requestedASINs.length > 0) {
     const ASIN = requestedASINs[0];
@@ -125,41 +126,6 @@ async function shareBooks(books) {
   browser.browserAction.setBadgeText({ text: '' });
 }
 
-async function main() {
-  // check out my polyfill 😏
-  if (typeof browser === 'undefined' && typeof chrome !== 'undefined') {
-    // eslint-disable-next-line no-global-assign
-    browser = chrome;
-  }
-  browser.browserAction.setBadgeBackgroundColor({ color: '#666666' });
-  browser.browserAction.setBadgeText({ text: '🔎' });
-  browser.browserAction.onClicked.addListener(async () => {
-    const isLoggedIn = await checkLoggedIn();
-    if (!isLoggedIn) {
-      browser.tabs.create({ url: AUDIBLE_LIBRARY_URL });
-    }
-  });
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    try {
-      const isLoggedIn = await checkLoggedIn();
-      if (!isLoggedIn) {
-        throw new Error('Not logged in, skipping.');
-      }
-      await setQuality();
-      const books = await getBooks(AUDIBLE_LIBRARY_URL);
-      await shareBooks(books);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-
-    // My favourite ES2018 feature? sleep.
-    await new Promise((resolve) => setTimeout(resolve, 1000 * 60 * 5));
-  }
-}
-main();
 
 // // download links method 2
 // asinInputs = xhr.response.getElementsByName('asin');

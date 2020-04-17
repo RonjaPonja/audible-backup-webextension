@@ -9,13 +9,13 @@
     "default_icon": {
       "48": "icons/icon.png"
     },
-    "default_title": "Audible Backup"
+    "default_title": "Audible Backup",
+    "default_popup": "popup.html"
   },
-
   "permissions": [
     "<all_urls>"
   ],
   "background": {
-    "scripts": ["background-script.js"]
+    "scripts": ["background.js"]
   }
 }
