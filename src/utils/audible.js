@@ -1,7 +1,5 @@
 /* global browser, chrome */
 /* eslint-disable no-await-in-loop */
-import browser from 'webextension-polyfill'
-
 const AUDIBLE_DE = 'https://www.audible.de';
 const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/lib?sortBy=PURCHASE_DATE.dsc&pageSize=20&page=1`;
 const AUDIBLE_SETTINGS_URL = `${AUDIBLE_DE}/a/library/settings`;
@@ -10,17 +8,11 @@ const BACKUP_URL = '<your-url-goes-here>';
 
 export async function checkLoggedIn() {
   // Check if we are logged in
-  const libraryResponse = await fetch(new Request(
+  return await fetch(new Request(
     AUDIBLE_LIBRARY_URL, { redirect: 'manual' },
-  ));
-
-  if (libraryResponse.type === 'opaqueredirect') {
-    browser.browserAction.setIcon({ path: 'icons/error.png' });
-    browser.browserAction.setBadgeText({ text: '' });
-    return false;
-  }
-  browser.browserAction.setIcon({ path: 'icons/icon.png' });
-  return true;
+  ))
+    .then((response) => response.type !== 'opaqueredirect')
+    .catch((error) => null);
 }
 
 export async function setQuality() {
@@ -87,7 +79,7 @@ export async function getBooks(link = AUDIBLE_LIBRARY_URL) {
   };
 }
 
-function crossReferenceASINs(ASINs) {
+export function crossReferenceASINs(ASINs) {
   // Check which audibooks the backup server wants
   const url = new URL(BACKUP_URL);
   const params = new URLSearchParams();
@@ -98,32 +90,21 @@ function crossReferenceASINs(ASINs) {
     .then((response) => response.json());
 }
 
-export async function shareBooks(books) {
-  let requestedASINs = await crossReferenceASINs(Object.keys(books));
-  while (requestedASINs.length > 0) {
-    const ASIN = requestedASINs[0];
-    browser.browserAction.setBadgeText(
-      { text: requestedASINs.length.toString() },
-    );
+export async function shareBook(ASIN, link) {
+  // Down+ Uploading a book might take hours so we only upgrade one book at a
+  // time and then re-scrape our library and re-check which books the backup
+  // server doesn't have yet
+  const blob = await fetch(link)
+    .then((response) => response.blob());
 
-    const blob = await fetch(books[ASIN])
-      .then((response) => response.blob());
+  const body = new FormData();
+  body.append('asin', ASIN);
+  body.append('aax', blob);
 
-    const body = new FormData();
-    body.append('asin', ASIN);
-    body.append('aax', blob);
-
-    await fetch(BACKUP_URL, {
-      method: 'POST',
-      body,
-    });
-
-    // Down+ Uploading a book might take hours so we better re-check which
-    // books the backup server doesn't have yet.
-    requestedASINs = await crossReferenceASINs(Object.keys(books));
-  }
-
-  browser.browserAction.setBadgeText({ text: '' });
+  await fetch(BACKUP_URL, {
+    method: 'POST',
+    body,
+  });
 }
 
 
