@@ -1,18 +1,15 @@
-/* global browser, chrome */
-/* eslint-disable no-await-in-loop */
 const AUDIBLE_DE = 'https://www.audible.de';
 const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/lib?sortBy=PURCHASE_DATE.dsc&pageSize=20&page=1`;
 const AUDIBLE_SETTINGS_URL = `${AUDIBLE_DE}/a/library/settings`;
-const BACKUP_URL = '<your-url-goes-here>';
 
 
 export async function checkLoggedIn() {
   // Check if we are logged in
-  return await fetch(new Request(
+  return fetch(new Request(
     AUDIBLE_LIBRARY_URL, { redirect: 'manual' },
   ))
     .then((response) => response.type !== 'opaqueredirect')
-    .catch((error) => null);
+    .catch(() => null);
 }
 
 export async function setQuality() {
@@ -36,20 +33,66 @@ export async function setQuality() {
   }
 }
 
-function parseBooks(libraryDocument) {
-  // download links method 1
-  const links = libraryDocument.querySelectorAll(
+function parseLegacyLibrary(libraryDocument) {
+  // Old library layout, currently in use in DE market
+  const linkElements = libraryDocument.querySelectorAll(
     '.adbl-lib-action-download a',
   );
 
-  // asin for link method 1
-  return [...links].reduce((books, { href }) => ({
-    ...books,
-    [href.match(/.*asin=([^&]+).*/)[1]]: href,
-  }), {});
+  return [...linkElements].reduce((library, element) => {
+    const columns = element.closest('tr').getElementsByTagName('td');
+
+    return {
+      ...library,
+      [element.href.match(/.*asin=([^&]+).*/)[1]]: {
+        downloadUrl: element.href,
+        imageUrl: columns[0].getElementsByTagName('img')[0].src,
+        title: columns[1].getElementsByTagName('a')[0].innerText,
+        author: columns[2].innerText,
+      },
+    };
+  }, {});
 }
 
-export async function getBooks(link = AUDIBLE_LIBRARY_URL) {
+function parseNewLibrary(libraryDocument) {
+  // New library layout, currently in use in US market
+  const bookElements = libraryDocument.querySelectorAll(
+    "div[id^='adbl-library-content-row-']",
+  );
+
+  return [...bookElements].reduce((library, element) => {
+    const downloadElement = [...element.getElementsByTagName('a')].filter(
+      (a) => a.href.includes('download?asin='),
+    )[0];
+    const ASIN = downloadElement.href.match(/.*asin=([^&]+).*/)[1];
+
+    // This is the 'Your First Listen' book. It doesn't have an author so it
+    // breaks during parsing.
+    if (ASIN === 'B002V8N37Q') {
+      return library;
+    }
+
+    return {
+      ...library,
+      [ASIN]: {
+        downloadUrl: downloadElement.href,
+        imageUrl: element.getElementsByTagName('img')[0].src,
+        title: element.querySelectorAll('.bc-size-headline3')[0].innerText,
+        author: element.querySelectorAll('.authorLabel a')[0].innerText,
+      },
+    };
+  }, {});
+}
+
+function parseLibrary(libraryDocument) {
+  try {
+    return parseLegacyLibrary(libraryDocument);
+  } catch (error) {
+    return parseNewLibrary(libraryDocument);
+  }
+}
+
+export async function getLibrary(link = AUDIBLE_LIBRARY_URL) {
   const libraryDocument = await fetch(link)
     .then((response) => response.text())
     .then((text) => new DOMParser().parseFromString(text, 'text/html'));
@@ -64,24 +107,29 @@ export async function getBooks(link = AUDIBLE_LIBRARY_URL) {
   const nextButton = libraryDocument.querySelectorAll(
     '.pagingElements .nextButton a',
   )[0];
+
   // If this is the last page, break recursion by just returning this
   // pages books
-  if (typeof nextButton === 'undefined' || nextButton.getAttribute('disabled') === 'true') {
-    return parseBooks(libraryDocument);
+  if (
+    typeof nextButton === 'undefined'
+    || nextButton.getAttribute('disabled') === 'true'
+  ) {
+    return parseLibrary(libraryDocument);
   }
+
   // If this isn't the last page, go into recursion and return this
   // pages book combined with the books from deeper recursion levels
-  const parsedBooks = parseBooks(libraryDocument);
-  const recursiveBooks = await getBooks(nextButton.href);
+  const parsedBooks = parseLibrary(libraryDocument);
+  const recursiveBooks = await getLibrary(nextButton.href);
   return {
     ...parsedBooks,
     ...recursiveBooks,
   };
 }
 
-export function crossReferenceASINs(ASINs) {
+export function crossReferenceASINs(backupURL, ASINs) {
   // Check which audibooks the backup server wants
-  const url = new URL(BACKUP_URL);
+  const url = new URL(backupURL);
   const params = new URLSearchParams();
   ASINs.forEach((ASIN) => { params.append('asins', ASIN); });
   url.search = params.toString();
@@ -90,7 +138,7 @@ export function crossReferenceASINs(ASINs) {
     .then((response) => response.json());
 }
 
-export async function shareBook(ASIN, link) {
+export async function shareBook(backupURL, ASIN, link) {
   // Down+ Uploading a book might take hours so we only upgrade one book at a
   // time and then re-scrape our library and re-check which books the backup
   // server doesn't have yet
@@ -101,25 +149,8 @@ export async function shareBook(ASIN, link) {
   body.append('asin', ASIN);
   body.append('aax', blob);
 
-  await fetch(BACKUP_URL, {
+  await fetch(backupURL, {
     method: 'POST',
     body,
   });
 }
-
-
-// // download links method 2
-// asinInputs = xhr.response.getElementsByName('asin');
-// [...asinInputs].reduce((links, asinInput) => {
-//     return [...new Set([
-//         ...links,
-//         ...asinInput.parentElement.querySelectorAll('a')
-//     ])]
-// }, []);
-
-// // asin for link method 2
-// a.closest(".bc-col-responsive").querySelectorAll('[name="asin"]')[0].value;
-
-// // beyond last page?
-// imgs = [...document.querySelectorAll('img')]
-// imgs.some((img) => { return img.src.includes('empty_lib') })
