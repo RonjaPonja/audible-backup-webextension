@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
   "name": "Audible Backup",
-  "version": "3",
-
-  "description": "Download and backup your Audible books to a remote server",
+  "description": "Download and backup your Audible books",
+  "author": "Patrick Meyer",
+  "version": "6",
 
   "browser_action": {
     "default_icon": {
