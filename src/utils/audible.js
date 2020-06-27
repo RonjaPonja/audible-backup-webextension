@@ -1,5 +1,5 @@
 const AUDIBLE_DE = 'https://www.audible.de';
-const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/lib?sortBy=PURCHASE_DATE.dsc&pageSize=20&page=1`;
+const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/library/titles?sortBy=PURCHASE_DATE.dsc&pageSize=20&page=1`;
 const AUDIBLE_SETTINGS_URL = `${AUDIBLE_DE}/a/library/settings`;
 
 
