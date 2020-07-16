@@ -33,28 +33,7 @@ export async function setQuality() {
   }
 }
 
-function parseLegacyLibrary(libraryDocument) {
-  // Old library layout, currently in use in DE market
-  const linkElements = libraryDocument.querySelectorAll(
-    '.adbl-lib-action-download a',
-  );
-
-  return [...linkElements].reduce((library, element) => {
-    const columns = element.closest('tr').getElementsByTagName('td');
-
-    return {
-      ...library,
-      [element.href.match(/.*asin=([^&]+).*/)[1]]: {
-        downloadUrl: element.href,
-        imageUrl: columns[0].getElementsByTagName('img')[0].src,
-        title: columns[1].getElementsByTagName('a')[0].innerText,
-        author: columns[2].innerText,
-      },
-    };
-  }, {});
-}
-
-function parseNewLibrary(libraryDocument) {
+function parseLibrary(libraryDocument) {
   // New library layout, currently in use in US market
   const bookElements = libraryDocument.querySelectorAll(
     "div[id^='adbl-library-content-row-']",
@@ -82,14 +61,6 @@ function parseNewLibrary(libraryDocument) {
       },
     };
   }, {});
-}
-
-function parseLibrary(libraryDocument) {
-  try {
-    return parseLegacyLibrary(libraryDocument);
-  } catch (error) {
-    return parseNewLibrary(libraryDocument);
-  }
 }
 
 export async function getLibrary(link = AUDIBLE_LIBRARY_URL) {
