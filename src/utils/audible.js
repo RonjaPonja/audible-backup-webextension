@@ -84,6 +84,7 @@ export async function getLibrary(link = AUDIBLE_LIBRARY_URL) {
   if (
     typeof nextButton === 'undefined'
     || nextButton.getAttribute('disabled') === 'true'
+    || nextButton.getAttribute('aria-disabled') === 'true'
   ) {
     return parseLibrary(libraryDocument);
   }
