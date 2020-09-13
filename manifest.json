@@ -3,7 +3,7 @@
   "name": "Audible Backup",
   "description": "Download and backup your Audible books",
   "author": "Patrick Meyer",
-  "version": "8",
+  "version": "9",
 
   "browser_action": {
     "default_icon": {
