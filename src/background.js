@@ -42,9 +42,6 @@ async function updateLibrary() {
     return;
   }
 
-  // Ensure we get single files and the best AAX files we can get
-  await Audible.setQuality();
-
   // Get Amazon Product IDs and download links for all books in our library
   const library = await Audible.getLibrary();
   store.dispatch(receiveLibrary(library));

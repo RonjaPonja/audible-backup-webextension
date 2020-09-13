@@ -1,6 +1,5 @@
 const AUDIBLE_DE = 'https://www.audible.de';
 const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/library/titles?sortBy=PURCHASE_DATE.dsc&pageSize=20&page=1`;
-const AUDIBLE_SETTINGS_URL = `${AUDIBLE_DE}/a/library/settings`;
 
 
 export async function checkLoggedIn() {
@@ -10,27 +9,6 @@ export async function checkLoggedIn() {
   ))
     .then((response) => response.type !== 'opaqueredirect')
     .catch(() => null);
-}
-
-export async function setQuality() {
-  // Check if we are logged in and get token
-  const tokenElement = await fetch(AUDIBLE_LIBRARY_URL)
-    .then((response) => response.text())
-    .then((text) => new DOMParser().parseFromString(text, 'text/html'))
-    .then((document) => document.querySelector('input[name="token"]'));
-
-  // Set default quality to Enhanced
-  const body = new FormData();
-  body.append('preferredFormat', 'Enhanced');
-  body.append('hmac', tokenElement && tokenElement.value);
-
-  const settingsResponse = await fetch(AUDIBLE_SETTINGS_URL, {
-    method: 'POST',
-    body,
-  });
-  if (!settingsResponse.ok) {
-    throw new Error('Failed to set Download Quality.');
-  }
 }
 
 function parseLibrary(libraryDocument) {
