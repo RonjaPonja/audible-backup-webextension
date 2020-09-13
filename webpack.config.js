@@ -21,12 +21,16 @@ module.exports = {
     extensions: ['.js', '.jsx'],
   },
   plugins: [
-    new CopyPlugin([
-      { from: './icons/', to: './icons/' },
-      { from: './manifest.json', to: '.' },
-      { from: './src/popup.html', to: '.' },
-      { from: './src/popup.css', to: '.' },
-    ]),
+    new CopyPlugin(
+      {
+        patterns: [
+          { from: './icons/', to: './icons/' },
+          { from: './manifest.json', to: '.' },
+          { from: './src/popup.html', to: '.' },
+          { from: './src/popup.css', to: '.' },
+        ],
+      },
+    ),
     // Sentry can't handle sourcemaps in webextensions anyway..
     // new SentryWebpackPlugin({
     //   include: '.',
