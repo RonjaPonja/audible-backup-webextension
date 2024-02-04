@@ -16,13 +16,25 @@ function parseLibrary(libraryDocument) {
   );
 
   return [...bookElements].reduce((library, element) => {
-    const downloadElement = [...element.getElementsByTagName('a')].filter(
+    const titleQ = element.querySelectorAll('.bc-size-headline3')[0]
+    const authorQ = element.querySelectorAll('.authorLabel a')[0]
+    const imageUrlQ = element.getElementsByTagName('img')[0]
+    const downloadElementQ = [...element.getElementsByTagName('a')].filter(
       (a) => a.href.includes('download?asin='),
     )[0];
-    const ASIN = downloadElement.href.match(/.*asin=([^&]+).*/)[1];
+
+    if (
+      titleQ === undefined || authorQ === undefined ||
+      imageUrlQ == undefined || downloadElementQ == undefined
+    ) {
+      let title = titleQ === undefined ? 'unparsable title' : titleQ.innerText.trim()
+      console.info("Couldn't parse book titled: %s", title)
+      return library;
+    }
 
     // This is the 'Your First Listen' book. It doesn't have an author so it
     // breaks during parsing.
+    const ASIN = downloadElementQ.href.match(/.*asin=([^&]+).*/)[1];
     if (ASIN === 'B002V8N37Q') {
       return library;
     }
@@ -30,10 +42,10 @@ function parseLibrary(libraryDocument) {
     return {
       ...library,
       [ASIN]: {
-        downloadUrl: downloadElement.href,
-        imageUrl: element.getElementsByTagName('img')[0].src,
-        title: element.querySelectorAll('.bc-size-headline3')[0].innerText,
-        author: element.querySelectorAll('.authorLabel a')[0].innerText,
+        downloadUrl: downloadElementQ.href,
+        imageUrl: imageUrlQ.src,
+        title: titleQ.innerText,
+        author: authorQ.innerText,
       },
     };
   }, {});
