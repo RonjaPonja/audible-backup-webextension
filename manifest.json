@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Audible Backup",
   "description": "Download and backup your Audible books",
-  "author": "Patrick Meyer",
+  "author": "Space Meyer",
   "version": "9",
 
   "browser_action": {

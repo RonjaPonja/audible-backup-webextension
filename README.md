@@ -22,10 +22,21 @@ npm install
 npm start
 ```
 
+Then follow [these instructions on how to load an unpacked extension](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_second_WebExtension#testing_it_out).
+
 To create a production build in `dist/` run:
 ```sh
 npm run-script build
 ```
 
-You can load `dist/` as an unpacked extension or further package and sign the
-extension via `crx` for chrome or via `web-ext` for firefox.
+## Firefox Package + Signing
+
+First get a Mozilla account and note down the JWT issuer and secret from this side: https://addons.mozilla.org/en-US/developers/addon/api/key/
+
+Then package and sign:
+```
+web-ext build --source-dir=./dist/ --verbose
+web-ext sign --source-dir=./dist/ --id="{c64df573-2fdd-4f75-a38e-eed35bc1a08f}" --api-key=<jwt_issuer> --api-secret=<jwt_secret> 
+```
+
+The signed extension will be placed in ./web-ext-artifacts. If the plugin was previously published under the same ID, the new version will go into a quick automatic review, before hitting the mozilla addon store.
