@@ -1,6 +1,5 @@
 const AUDIBLE_DE = 'https://www.audible.de';
-const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/library/titles?sortBy=PURCHASE_DATE.dsc&pageSize=20&page=1`;
-
+const AUDIBLE_LIBRARY_URL = `${AUDIBLE_DE}/library/audiobooks?sortBy=PURCHASE_DATE.dsc&pageSize=50`;
 
 export async function checkLoggedIn() {
   // Check if we are logged in
@@ -12,7 +11,6 @@ export async function checkLoggedIn() {
 }
 
 function parseLibrary(libraryDocument) {
-  // New library layout, currently in use in US market
   const bookElements = libraryDocument.querySelectorAll(
     "div[id^='adbl-library-content-row-']",
   );
@@ -89,7 +87,7 @@ export function crossReferenceASINs(backupURL, ASINs) {
 }
 
 export async function shareBook(backupURL, ASIN, link) {
-  // Down+ Uploading a book might take hours so we only upgrade one book at a
+  // Down+ Uploading a book might take hours so we only upload one book at a
   // time and then re-scrape our library and re-check which books the backup
   // server doesn't have yet
   const blob = await fetch(link)
