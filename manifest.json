@@ -3,7 +3,7 @@
   "name": "Audible Backup",
   "description": "Download and backup your Audible books",
   "author": "Space Meyer",
-  "version": "9",
+  "version": "10",
 
   "browser_action": {
     "default_icon": {
